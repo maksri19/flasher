@@ -682,7 +682,8 @@ void textbox_tab(Textbox* this, bool shift) {
 		textbox_insertTextAtCursor(this, this->cursor_idx, "\t");
 	
 	}
-
+	
+	textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
 	textbox_pushHistory(this);
 	this->cursor_display = true;
 	this->last_blink_ms = (double)getTimeNs() / 1000000.0;
@@ -709,6 +710,81 @@ static void textbox_cut(Textbox* this, Context* ctx) {
 	textbox_copy(this, ctx);
 	textbox_delete(this, false, false);
 	textbox_pushHistory(this);
+}
+
+
+void textbox_selectWord(Textbox* this, int click_idx) {
+	if (this->length <= 0) {
+		this->sel_start = -1;
+		this->cursor_idx = 0;
+		return;
+	}
+
+	int idx = clampInt(0, click_idx, this->length - 1);
+	int start = idx;
+	int end = idx;
+
+	if (isalnum(this->buffer[idx]) || this->buffer[idx] == '_') {
+		while (start > 0 && (isalnum((unsigned char)this->buffer[start - 1]) || this->buffer[start - 1] == '_')) {
+			start--;
+		}
+		while (end < this->length && (isalnum((unsigned char)this->buffer[end]) || this->buffer[end] == '_')) {
+			end++;
+		}
+	} else if (is_tab_or_space(this->buffer[idx])) {
+		while (start > 0 && is_tab_or_space(this->buffer[start - 1])) {
+			start--;
+		}
+		while (end < this->length && is_tab_or_space(this->buffer[end])) {
+			end++;
+		}
+	} else if (this->buffer[idx] == '\n') {
+		end = idx + 1;
+	} else {
+		while (start > 0 && !isalnum(this->buffer[start - 1]) && this->buffer[start - 1] != '_' && !is_tab_or_space(this->buffer[start - 1]) && this->buffer[start - 1] != '\n') {
+			start--;
+		}
+		while (end < this->length && !isalnum((unsigned char)this->buffer[end]) && this->buffer[end] != '_' && !is_tab_or_space(this->buffer[end]) && this->buffer[end] != '\n') {
+			end++;
+		}
+	}
+
+	this->sel_start = start;
+	this->cursor_idx = end;
+	textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
+	this->cursor_max_col = this->cursor_col;
+}
+
+
+void textbox_selectParagraph(Textbox* this, int click_idx) {
+	if (this->length <= 0) {
+		this->sel_start = -1;
+		this->cursor_idx = 0;
+		return;
+	}
+
+	int idx = clampInt(0, click_idx, this->length);
+
+	// if clicking right on a \n (empty line or end of line), anchor on that line
+	int start = idx;
+	while (start > 0 && this->buffer[start - 1] != '\n') {
+		start--;
+	}
+	int end = idx;
+	while (end < this->length && this->buffer[end] != '\n') {
+		end++;
+	}
+
+	if (start == end) {
+		this->sel_start = -1;
+		this->cursor_idx = start;
+	} else {
+		this->sel_start = start;
+		this->cursor_idx = end;
+	}
+
+	textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
+	this->cursor_max_col = this->cursor_col;
 }
 
 
@@ -747,31 +823,38 @@ void textbox_update(Textbox* this, Context* ctx, Event* e) {
 		this->last_click_time_ms = now_ms;
 		this->last_click_idx = click_idx;
 
-		// if (this->click_count == 3) {
-		// 	textbox_selectParagraph(this, click_idx);
-		// 	this->is_dragging = false;
-		// } else if (this->click_count == 2) {
-		// 	textbox_selectWord(this, click_idx);
-		// 	this->is_dragging = false;
-		if (shift) {
+		if (this->click_cnt == 3) {
+			textbox_selectParagraph(this, click_idx);
+			this->is_dragging = false;
+		}
+		else if (this->click_cnt == 2) {
+			textbox_selectWord(this, click_idx);
+			this->is_dragging = false;
+		}
+		else if (shift) {
 			if (this->sel_start == -1) {
 				this->sel_start = this->cursor_idx;
 			}
 			this->cursor_idx = click_idx;
 			this->is_dragging = true;
 			textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
-		} else {
+		}
+		else {
 			this->cursor_idx = click_idx;
 			this->sel_start = click_idx;
 			this->is_dragging = true;
 			textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
 		}
+		this->cursor_display = true;
+		this->last_blink_ms = (double)getTimeNs() / 1000000.0;
 	}
 	if (this->is_dragging && mouse_down) {
 		if (click_idx != this->cursor_idx) {
 			this->cursor_idx = click_idx;
 			textbox_getCursorRowCol(this, this->cursor_idx, &this->cursor_row, &this->cursor_col);
 		}
+		this->cursor_display = true;
+		this->last_blink_ms = (double)getTimeNs() / 1000000.0;
 	}
 	if (mouse_just_up && this->is_dragging) {
 		this->is_dragging = false;

@@ -2,7 +2,7 @@ INCDIR := -I./include/
 LIBDIR := 
 RUNTIMEDIR := 
 
-CFLAG := $(INCDIR) -Wall -Wextra -std=c17 -MMD -MP
+CFLAG := $(INCDIR) -Wall -std=c17 -MMD -MP
 LDFLAG := $(LIBDIR) $(RUNTIMEDIR) -lglfw -lGL -lm
 
 SRCS := $(wildcard src/*.c)

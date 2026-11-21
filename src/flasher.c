@@ -15,7 +15,7 @@ static void flasher_newFlasher(Flasher* this) {
 	}
 
 	char new_file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(new_file_path, "%s%s%s", FLASHER_FOLDER_PATH, new_file_name, FLASHER_FILE_EXTENSION);
+	sprintf(new_file_path, "%s%s%s", PROGRAM_FOLDER_PATH, new_file_name, FLASHER_FILE_EXTENSION);
 	
 	// create file and update variable
 	file_newFile(new_file_path);
@@ -28,7 +28,7 @@ static void flasher_newFlasher(Flasher* this) {
 
 static void flasher_deleteFlasher(Flasher* this) {
 	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", FLASHER_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
+	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
 	
 	// delete file and update variable
 	file_deleteFile(file_path);
@@ -52,7 +52,7 @@ static void flasher_openFlasher(Flasher* this, int flasher_idx) {
 
 	// format file path
 	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", FLASHER_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
+	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
 
 	// read file into buffer
 	this->textbox.length = file_readFileToBuffer(file_path, this->textbox.buffer, TEXTBOX_MAX_BUFFER_LENGTH);
@@ -72,7 +72,7 @@ static void flasher_openFlasher(Flasher* this, int flasher_idx) {
 static void flasher_saveCurrFlasher(Flasher* this) {
 	// format file path
 	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", FLASHER_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
+	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
 
 	// write file from buffer
 	file_writeFileFromBuffer(file_path, this->textbox.buffer);
@@ -82,7 +82,7 @@ static void flasher_saveCurrFlasher(Flasher* this) {
 Flasher flasher_create(void) {
     Flasher this = {0};
 	this.stride = FLASHER_FILE_NAME_LENGTH+1;
-	this.flasher_cnt = file_getFileNameInDir(FLASHER_FOLDER_PATH, this.flashers, this.stride, FLASHER_MAX_FILE_COUNT, FLASHER_FILE_NAME_LENGTH);
+	this.flasher_cnt = file_getFileNameInDir(PROGRAM_FOLDER_PATH, this.flashers, this.stride, FLASHER_MAX_FILE_COUNT, FLASHER_FILE_NAME_LENGTH);
 	this.flasher_idx = this.flasher_cnt > 0 ? 0 : -1;
 
 	this.textbox = textbox_create(20, 55, 1160, 805);
@@ -246,7 +246,7 @@ void flasher_render(Flasher* this, Renderer* renderer) {
 		else {
 			const char* file_name = this->flashers + this->stride * this->flasher_idx;
 			char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-			sprintf(file_path, "%s%s%s", FLASHER_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
+			sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
 
 			snprintf(status_label, sizeof(status_label), "Saved! ""%s"", %zu byte(s)", file_path, get_file_size(file_path));
 		}

@@ -13,10 +13,13 @@
 #include <ctype.h>
 #include <math.h>
 #include <glad.h>
+#include <cfgpath.h>
 #include <GLFW/glfw3.h>
 
 #define MEMORY_POOL_CAPACITY (64 * 1024 * 1024) // 64 MiB
 #define WINDOW_TITLE "Flasher version 1.0.0 (beta)"
+#define PROGRAM_FOLDER_PATH "./assets/"
+
 
 typedef uint32_t RGBA;
 

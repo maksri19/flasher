@@ -5,7 +5,7 @@ void file_newFile(const char* file_path) {
 	// open new file
 	FILE* fptr = fopen(file_path, "wx");
 	if (fptr == NULL) {
-		log_exit("Unable to write file\n");
+		log_exit("Error deleting file %s: %s\n", file_path, strerror(errno));
 	}
 
 	// greetings for new file
@@ -16,7 +16,7 @@ void file_newFile(const char* file_path) {
 void file_deleteFile(const char* file_path) {
 	// delete file
 	if (remove(file_path) != 0) {
-		log_exit("Error deleting file\n");
+		log_exit("Error deleting file %s: %s\n", file_path, strerror(errno));
 	}
 }
 
@@ -25,7 +25,7 @@ int file_getFileNameInDir(const char* folder_path, char* files, int stride, int 
 	// open directory
     DIR* dir = opendir(folder_path);
     if (dir == NULL) {
-		log_exit("Unable to open directory");
+		log_exit("Error opening directory %s: %s\n", folder_path, strerror(errno));
 	}
 
 	int file_cnt = 0;
