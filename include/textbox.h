@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define TEXTBOX_MAX_BUFFER_LENGTH (1023)
+#define TEXTBOX_MAX_BUFFER_LENGTH (10000)
 #define TEXTBOX_INITIAL_FONT_SCALE (2.0)
 #define TEXTBOX_MIN_FONT_SCALE	(1.0)
 #define TEXTBOX_TAB_SIZE (8)

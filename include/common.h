@@ -6,19 +6,21 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <time.h>
-#include <dirent.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
 #include <glad.h>
-#include <cfgpath.h>
 #include <GLFW/glfw3.h>
+#ifdef __linux__
+	#include <sys/stat.h>
+	#include <unistd.h>
+	#include <dirent.h>
+#endif
 
-#define MEMORY_POOL_CAPACITY (64 * 1024 * 1024) // 64 MiB
-#define WINDOW_TITLE "Flasher version 1.0.0 (beta)"
-#define PROGRAM_FOLDER_PATH "./assets/"
+#define MEMORY_POOL_CAPACITY (16 * 1024 * 1024) // 16 MiB
+#define PROGRAM_NAME "Flasher version 1.0.0 (beta)"
 
 
 typedef uint32_t RGBA;

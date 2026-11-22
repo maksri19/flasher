@@ -9,19 +9,11 @@ int main(void)
 
 	// setup
 	srand(time(NULL));
-	Flasher flasher = flasher_create();
+	Flasher flasher = flasher_create(&ctx);
 
 	printf("Memory Occupied:\t%zu byte(s)\n", memory_getOffset());
 	printf("Memory Available:\t%zu byte(s)\n", MEMORY_POOL_CAPACITY);
 	fflush(stdout);
-
-	char cfgdir[MAX_PATH];
-	get_user_config_file(cfgdir, sizeof(cfgdir), "myapp");
-	if (cfgdir[0] == 0) {
-		printf("Unable to find home directory.\n");
-		return 1;
-	}
-	printf("Saving configuration file to %s\n", cfgdir);
 
 
 	// main loop

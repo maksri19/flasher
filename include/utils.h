@@ -43,4 +43,15 @@ static bool is_tab_or_space(char c) {
 }
 
 
+static const char* get_unix_epoch_time_string(time_t ep) {
+	struct tm* time_info;
+	static char buffer[64];
+	
+	time_info = localtime(&ep);
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time_info);
+
+	return buffer;
+}
+
+
 #endif

@@ -6,13 +6,15 @@
 
 #define FLASHER_MAX_FILE_COUNT	(1024)
 #define FLASHER_FILE_NAME_LENGTH (10)
-#define FLASHER_MAX_FILE_PATH_LENGTH (255)
 #define FLASHER_FILE_EXTENSION	".flasher"
 
 
 typedef struct Flasher Flasher;
 
 struct Flasher {
+	// path
+	char store_path[DISK_MAX_PATH_LENGTH+1];
+
 	// file managerment
 	int		flasher_cnt;
 	int		flasher_idx;
@@ -29,7 +31,7 @@ struct Flasher {
 };
 
 
-Flasher	flasher_create(void);
+Flasher	flasher_create(Context* ctx);
 void	flasher_update(Flasher* this, Context* ctx, Event* e);
 void 	flasher_render(Flasher* this, Renderer* renderer);
 

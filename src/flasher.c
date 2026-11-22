@@ -14,11 +14,11 @@ static void flasher_newFlasher(Flasher* this) {
 		}
 	}
 
-	char new_file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(new_file_path, "%s%s%s", PROGRAM_FOLDER_PATH, new_file_name, FLASHER_FILE_EXTENSION);
+	char new_file_path[DISK_MAX_PATH_LENGTH+1];
+	snprintf(new_file_path, sizeof(new_file_path), "%s%s%s", this->store_path, new_file_name, FLASHER_FILE_EXTENSION);
 	
 	// create file and update variable
-	file_newFile(new_file_path);
+	disk_newFile(new_file_path);
 
 	this->flasher_cnt++;
 	this->flasher_idx = this->flasher_cnt - 1;
@@ -27,11 +27,11 @@ static void flasher_newFlasher(Flasher* this) {
 
 
 static void flasher_deleteFlasher(Flasher* this) {
-	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
+	char file_path[DISK_MAX_PATH_LENGTH+1];
+	snprintf(file_path, sizeof(file_path), "%s%s%s", this->store_path, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
 	
 	// delete file and update variable
-	file_deleteFile(file_path);
+	disk_deleteFile(file_path);
 
 	this->flasher_cnt--;
 	if (this->flasher_idx > this->flasher_cnt-1) {
@@ -43,7 +43,7 @@ static void flasher_deleteFlasher(Flasher* this) {
 }
 
 
-static void flasher_openFlasher(Flasher* this, int flasher_idx) {
+static void flasher_openFlasher(Flasher* this, Context* ctx, int flasher_idx) {
 	if (flasher_idx < 0 || flasher_idx > this->flasher_cnt-1) {
 		log_info("Request idx out of bounds\n");
 		return;
@@ -51,11 +51,11 @@ static void flasher_openFlasher(Flasher* this, int flasher_idx) {
 	this->flasher_idx = flasher_idx;
 
 	// format file path
-	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
+	char file_path[DISK_MAX_PATH_LENGTH+1];
+	snprintf(file_path, sizeof(file_path), "%s%s%s", this->store_path, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
 
 	// read file into buffer
-	this->textbox.length = file_readFileToBuffer(file_path, this->textbox.buffer, TEXTBOX_MAX_BUFFER_LENGTH);
+	this->textbox.length = disk_readFileToBuffer(file_path, this->textbox.buffer, TEXTBOX_MAX_BUFFER_LENGTH);
 	this->textbox.cursor_idx = this->textbox.length;
 
 	this->textbox.history_cnt = 0;
@@ -66,23 +66,31 @@ static void flasher_openFlasher(Flasher* this, int flasher_idx) {
 	textbox_syncWrapBuffer(&this->textbox);
 	textbox_getCursorRowCol(&this->textbox, this->textbox.cursor_idx, &this->textbox.cursor_row, &this->textbox.cursor_col);
 	this->textbox.cursor_max_col = this->textbox.cursor_col;
+
+	// change window title
+	char window_title[DISK_MAX_PATH_LENGTH + 32 + 1];
+	snprintf(window_title, sizeof(window_title), "%s - %s", file_path, PROGRAM_NAME);
+	glfwSetWindowTitle(ctx->glfw_window, window_title);
+	
 }
 
 
 static void flasher_saveCurrFlasher(Flasher* this) {
 	// format file path
-	char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-	sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
+	char file_path[DISK_MAX_PATH_LENGTH+1];
+	snprintf(file_path, sizeof(file_path), "%s%s%s", this->store_path, this->flashers + this->flasher_idx * this->stride, FLASHER_FILE_EXTENSION);
 
 	// write file from buffer
-	file_writeFileFromBuffer(file_path, this->textbox.buffer);
+	disk_writeFileFromBuffer(file_path, this->textbox.buffer);
 }
 
 
-Flasher flasher_create(void) {
+Flasher flasher_create(Context* ctx) {
     Flasher this = {0};
+	disk_getAppDataPath(this.store_path, DISK_MAX_PATH_LENGTH, "flasher");
+
 	this.stride = FLASHER_FILE_NAME_LENGTH+1;
-	this.flasher_cnt = file_getFileNameInDir(PROGRAM_FOLDER_PATH, this.flashers, this.stride, FLASHER_MAX_FILE_COUNT, FLASHER_FILE_NAME_LENGTH);
+	this.flasher_cnt = disk_getFileNameInDir(this.store_path, this.flashers, this.stride, FLASHER_MAX_FILE_COUNT);
 	this.flasher_idx = this.flasher_cnt > 0 ? 0 : -1;
 
 	this.textbox = textbox_create(20, 55, 1160, 805);
@@ -92,7 +100,7 @@ Flasher flasher_create(void) {
 	this.mouse_down_prev = false;
 	
 	if (this.flasher_idx >= 0) {
-		flasher_openFlasher(&this, this.flasher_idx);
+		flasher_openFlasher(&this, ctx, this.flasher_idx);
 	}
 	return this;
 }
@@ -150,21 +158,21 @@ void flasher_update(Flasher* this, Context* ctx, Event* e) {
 				if (key == GLFW_KEY_LEFT) {
 					if (this->flasher_idx > 0) {
 						flasher_saveCurrFlasher(this);
-						flasher_openFlasher(this, this->flasher_idx-1);
+						flasher_openFlasher(this, ctx, this->flasher_idx-1);
 					}
 				}
 				// previous flasher
 				if (key == GLFW_KEY_RIGHT) {
 					if (this->flasher_idx < this->flasher_cnt-1) {
 						flasher_saveCurrFlasher(this);
-						flasher_openFlasher(this, this->flasher_idx+1);
+						flasher_openFlasher(this, ctx, this->flasher_idx+1);
 					}
 				}
 				// random flasher
 				if (shift && (key == GLFW_KEY_R)) {
 					if (this->flasher_cnt > 0) {
 						flasher_saveCurrFlasher(this);
-						flasher_openFlasher(this, getRandomInt(0, this->flasher_cnt-1));
+						flasher_openFlasher(this, ctx,getRandomInt(0, this->flasher_cnt-1));
 					}
 				}
 				// new flasher
@@ -173,14 +181,16 @@ void flasher_update(Flasher* this, Context* ctx, Event* e) {
 						flasher_saveCurrFlasher(this);
 					}
 					flasher_newFlasher(this);
-					flasher_openFlasher(this, this->flasher_idx);
+					flasher_openFlasher(this, ctx, this->flasher_idx);
 				}
 				// delete flasher
 				if (shift && (key == GLFW_KEY_D)) {
 					if (this->flasher_cnt > 0) {
 						flasher_deleteFlasher(this);
 						if (this->flasher_idx >= 0) {
-							flasher_openFlasher(this, this->flasher_idx);
+							flasher_openFlasher(this, ctx, this->flasher_idx);
+						} else {
+							glfwSetWindowTitle(ctx->glfw_window, PROGRAM_NAME);
 						}
 					}
 				}
@@ -241,14 +251,16 @@ void flasher_render(Flasher* this, Renderer* renderer) {
 			if (this->textbox.sel_start != -1) {
 				sel_len = abs(this->textbox.cursor_idx - this->textbox.sel_start);
 			}
-			snprintf(status_label, sizeof(status_label), "(Unsaved) row:%d col:%d sel:%d len:%d", this->textbox.cursor_row, this->textbox.cursor_col, sel_len, this->textbox.length);
+			snprintf(status_label, sizeof(status_label), "(Unsaved) row:%d col:%d sel:%d len:%d/%d", this->textbox.cursor_row, this->textbox.cursor_col, sel_len, this->textbox.length, TEXTBOX_MAX_BUFFER_LENGTH);
 		}
 		else {
 			const char* file_name = this->flashers + this->stride * this->flasher_idx;
-			char file_path[9+FLASHER_FILE_NAME_LENGTH+8+1];
-			sprintf(file_path, "%s%s%s", PROGRAM_FOLDER_PATH, this->flashers + this->stride * this->flasher_idx, FLASHER_FILE_EXTENSION);
+			char file_path[DISK_MAX_PATH_LENGTH+1];
+			snprintf(file_path, sizeof(file_path), "%s%s%s", this->store_path, file_name, FLASHER_FILE_EXTENSION);
 
-			snprintf(status_label, sizeof(status_label), "Saved! ""%s"", %zu byte(s)", file_path, get_file_size(file_path));
+			DiskFileInfo info;
+			disk_getPathInfo(file_path, &info);
+			snprintf(status_label, sizeof(status_label), "Saved!, %s, %zu byte(s)", get_unix_epoch_time_string(info.mod_time_s), info.size);
 		}
 
 		int status_label_length = strlen(status_label);

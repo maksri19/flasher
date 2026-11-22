@@ -17,7 +17,7 @@ Context context_create(int w, int h) {
 	this.w = w;
 	this.h = h;
 
-	this.glfw_window = glfwCreateWindow(this.w, this.h, WINDOW_TITLE, NULL, NULL);
+	this.glfw_window = glfwCreateWindow(this.w, this.h, PROGRAM_NAME, NULL, NULL);
 	if (!this.glfw_window) {
 		log_exit("Failed to create GLFW window\n");
 	}

@@ -6,7 +6,7 @@
 #include "context.h"
 #include "renderer.h"
 #include "event.h"
-#include "file.h"
+#include "disk.h"
 
 #include "flasher.h"
 #include "textbox.h"
